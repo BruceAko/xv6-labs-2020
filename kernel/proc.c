@@ -721,3 +721,22 @@ void procdump(void)
     printf("\n");
   }
 }
+
+// Returns the number of process
+uint64 get_nproc()
+{
+  int nproc = 0;
+  struct proc *p;
+
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    // 注意：此处需要获取锁吗？
+    acquire(&p->lock);
+    if (p->state != UNUSED)
+    {
+      nproc++;
+    }
+    release(&p->lock);
+  }
+  return nproc;
+}

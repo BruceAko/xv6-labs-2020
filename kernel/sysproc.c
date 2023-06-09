@@ -8,6 +8,9 @@
 #include "proc.h"
 #include "sysinfo.h"
 
+extern uint64 get_freemem();
+extern uint64 get_nproc();
+
 uint64
 sys_exit(void)
 {
@@ -119,8 +122,9 @@ sys_sysinfo(void)
   struct proc *p = myproc();
   struct sysinfo info;
 
-  info.freemem = 1;
-  info.nproc = 1;
+  // 注意：出现错误“panic: acquire”的原因是获取锁之后没有释放锁，导致下一次获取锁失败
+  info.freemem = get_freemem();
+  info.nproc = get_nproc();
 
   if (copyout(p->pagetable, addr, (char *)&info, sizeof(info)) < 0)
     return -1;
