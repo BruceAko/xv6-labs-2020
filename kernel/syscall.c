@@ -127,6 +127,29 @@ static uint64 (*syscalls[])(void) = {
     [SYS_trace] sys_trace,
 };
 
+static char *syscall_name[22] = {"fork",
+                                 "exit",
+                                 "wait",
+                                 "pipe",
+                                 "read",
+                                 "kill",
+                                 "exec",
+                                 "fstat",
+                                 "chdir",
+                                 "dup",
+                                 "getpid",
+                                 "sbrk",
+                                 "sleep",
+                                 "uptime",
+                                 "open",
+                                 "write",
+                                 "mknod",
+                                 "unlink",
+                                 "link",
+                                 "mkdir",
+                                 "close",
+                                 "trace"};
+
 void syscall(void)
 {
   int num;
@@ -136,6 +159,10 @@ void syscall(void)
   if (num > 0 && num < NELEM(syscalls) && syscalls[num])
   {
     p->trapframe->a0 = syscalls[num]();
+    if (p->mask & (1 << num))
+    {
+      printf("%d: syscall %s -> %d\n", p->pid, syscall_name[num - 1], p->trapframe->a0);
+    }
   }
   else
   {
