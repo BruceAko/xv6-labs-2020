@@ -730,13 +730,11 @@ uint64 get_nproc()
 
   for (p = proc; p < &proc[NPROC]; p++)
   {
-    // 注意：此处需要获取锁吗？
-    acquire(&p->lock);
+    // 注意：此处不需要获取锁，循环的写法参考allocproc()
     if (p->state != UNUSED)
     {
       nproc++;
     }
-    release(&p->lock);
   }
   return nproc;
 }

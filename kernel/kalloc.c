@@ -85,7 +85,7 @@ uint64 get_freemem()
 {
   int free_page_num = 0;
   struct run *r;
-  // 注意：需要获取锁吗？
+  // 注意：此处需要获取锁，循环的写法参考kalloc()
   acquire(&kmem.lock);
   r = kmem.freelist;
   while (r)
