@@ -102,21 +102,8 @@ uint64
 sys_trace(void)
 {
   int n;
-  uint ticks0;
-
   if (argint(0, &n) < 0)
     return -1;
-  acquire(&tickslock);
-  ticks0 = ticks;
-  while (ticks - ticks0 < n)
-  {
-    if (myproc()->killed)
-    {
-      release(&tickslock);
-      return -1;
-    }
-    sleep(&ticks, &tickslock);
-  }
-  release(&tickslock);
+  myproc()->mask = n;
   return 0;
 }
