@@ -454,3 +454,43 @@ int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+void vmprint(pagetable_t pagetable)
+{
+  // 打印vmprint的参数
+  printf("page table %p\n", pagetable);
+  // there are 2^9 = 512 PTEs in a page table.
+  for (int i = 0; i < 512; i++)
+  {
+    pte_t pte = pagetable[i];
+    // this PTE points to a lower-level page table.
+    if (pte & PTE_V)
+    {
+      pagetable_t child = (pagetable_t)PTE2PA(pte);
+      // 打印第一级页表的一条有效PTE的信息，包含索引，该行PTE的值，以及这个值对应的物理地址
+      printf("..%d: pte %p pa %p\n", i, pte, child);
+      // 根据物理地址查询第二级页表
+      for (int j = 0; j < 512; j++)
+      {
+        pte = child[j];
+        if (pte & PTE_V)
+        {
+          pagetable_t grand_child = (pagetable_t)PTE2PA(pte);
+          // 打印第二级页表中所有的有效PTE信息
+          printf(".. ..%d: pte %p pa %p\n", j, pte, grand_child);
+          // 根据PTE中的物理地址查询第三级页表
+          for (int k = 0; k < 512; k++)
+          {
+            pte = grand_child[k];
+            if (pte & PTE_V)
+            {
+              // 第三级页表中的PTE存储的是真实物理地址
+              uint64 physical_address = PTE2PA(pte);
+              printf(".. .. ..%d: pte %p pa %p\n", k, pte, physical_address);
+            }
+          }
+        }
+      }
+    }
+  }
+}
