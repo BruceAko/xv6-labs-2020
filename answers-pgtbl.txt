@@ -1,0 +1,4 @@
+Q:根据文本中的图3-4解释vmprint的输出。page 0包含什么？page 2中是什么？在用户模式下运行时，进程是否可以读取/写入page 1映射的内存？
+
+A:根据参考书的图3-4还有打印出来的地址值（可以在分配页面时打印出text stack trampoline的地址）显然可以得出page0是程序的text和data段，page2是程序的stack段，page1是guard段。在exec中查代码发现其连续分配两个page，高地址page用作stack，低地址page用作guard，并且对guard进行clear，也就是其PTE的U为0，所以不能进行读写。剩下的都是高地址段：依次是自己定义的usyscall，trapframe，trampoline。
+参考：https://zhuanlan.zhihu.com/p/452807553
