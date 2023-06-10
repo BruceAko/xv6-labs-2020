@@ -464,6 +464,7 @@ void vmprint(pagetable_t pagetable)
   {
     pte_t pte = pagetable[i];
     // this PTE points to a lower-level page table.
+    // 注意：PTE_V是用来判断页表项是否有效，而(pte & (PTE_R|PTE_W|PTE_X)) == 0则是用来判断是否不在最后一层。因为最后一层页表中页表项中W位，R位，X位起码有一位会被设置为1。见freewalk()。
     if (pte & PTE_V)
     {
       pagetable_t child = (pagetable_t)PTE2PA(pte);
