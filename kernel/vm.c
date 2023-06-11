@@ -455,6 +455,46 @@ int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   }
 }
 
+/**
+ * @param pagetable 所要打印的页表
+ * @param level 页表的层级
+ */
+void _vmprint(pagetable_t pagetable, int level)
+{
+  // there are 2^9 = 512 PTEs in a page table.
+  for (int i = 0; i < 512; i++)
+  {
+    pte_t pte = pagetable[i];
+    // PTE_V is a flag for whether the page table is valid
+    if (pte & PTE_V)
+    {
+      for (int j = 0; j < level; j++)
+      {
+        if (j)
+          printf(" ");
+        printf("..");
+      }
+      uint64 child = PTE2PA(pte);
+      printf("%d: pte %p pa %p\n", i, pte, child);
+      if ((pte & (PTE_R | PTE_W | PTE_X)) == 0)
+      {
+        // this PTE points to a lower-level page table.
+        _vmprint((pagetable_t)child, level + 1);
+      }
+    }
+  }
+}
+
+/**
+ * @brief vmprint 打印页表
+ * @param pagetable 所要打印的页表
+ */
+void vmprint2(pagetable_t pagetable)
+{
+  printf("page table %p\n", pagetable);
+  _vmprint(pagetable, 1);
+}
+
 void vmprint(pagetable_t pagetable)
 {
   // 打印vmprint的参数
@@ -496,7 +536,7 @@ void vmprint(pagetable_t pagetable)
   }
 }
 
-pagetable_t ukvminit()
+pagetable_t user_kvminit()
 {
   pagetable_t k_pagetable = (pagetable_t)kalloc();
   memset(k_pagetable, 0, PGSIZE);
@@ -518,5 +558,25 @@ pagetable_t ukvminit()
   // PLIC
   mappages(k_pagetable, PLIC, 0x400000, PLIC, PTE_R | PTE_W);
 
-  return kernel_pagetable;
+  // 注意：之前不小心错写成了kernal_pagetable，这个小bug花了几个小时的时间……
+  return k_pagetable;
+}
+
+void user_kvmfree(pagetable_t pagetable)
+{
+  pte_t PTE = pagetable[0];
+  pagetable_t level1_pagetable = (pagetable_t)PTE2PA(PTE);
+  //  此处仅需要释放页表，而不必释放叶子物理内存页面
+  for (int i = 0; i < 512; i++)
+  {
+    pte_t pte = level1_pagetable[i];
+    if (pte & PTE_V)
+    {
+      uint64 level2_pagetable = PTE2PA(pte);
+      kfree((pagetable_t)(level2_pagetable));
+      level1_pagetable[i] = 0;
+    }
+  }
+  kfree(level1_pagetable);
+  kfree(pagetable);
 }

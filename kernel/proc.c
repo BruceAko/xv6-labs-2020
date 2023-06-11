@@ -20,6 +20,7 @@ static void wakeup1(struct proc *chan);
 static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
+extern pagetable_t kernel_pagetable;
 
 // initialize the proc table at boot time.
 void procinit(void)
@@ -129,7 +130,7 @@ found:
   }
 
   // Create kernel page table,
-  p->k_pagetable = ukvminit();
+  p->k_pagetable = user_kvminit();
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
@@ -151,6 +152,10 @@ freeproc(struct proc *p)
   p->trapframe = 0;
   if (p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
+  if (p->k_pagetable)
+  {
+    user_kvmfree(p->k_pagetable);
+  }
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
@@ -495,10 +500,17 @@ void scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
+
+        w_satp(MAKE_SATP(p->k_pagetable));
+        sfence_vma();
+
         swtch(&c->context, &p->context);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
+        w_satp(MAKE_SATP(kernel_pagetable));
+        sfence_vma();
+
         c->proc = 0;
 
         found = 1;
