@@ -128,6 +128,9 @@ found:
     return 0;
   }
 
+  // Create kernel page table,
+  p->k_pagetable = ukvminit();
+
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&p->context, 0, sizeof(p->context));

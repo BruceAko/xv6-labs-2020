@@ -507,16 +507,16 @@ pagetable_t ukvminit()
   }
 
   // uart registers
-  kvmmap(UART0, UART0, PGSIZE, PTE_R | PTE_W);
+  mappages(k_pagetable, UART0, PGSIZE, UART0, PTE_R | PTE_W);
 
   // virtio mmio disk interface
-  kvmmap(VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
+  mappages(k_pagetable, VIRTIO0, PGSIZE, VIRTIO0, PTE_R | PTE_W);
 
   // CLINT
-  kvmmap(CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+  mappages(k_pagetable, CLINT, 0x10000, CLINT, PTE_R | PTE_W);
 
   // PLIC
-  kvmmap(PLIC, PLIC, 0x400000, PTE_R | PTE_W);
+  mappages(k_pagetable, PLIC, 0x400000, PLIC, PTE_R | PTE_W);
 
   return kernel_pagetable;
 }
