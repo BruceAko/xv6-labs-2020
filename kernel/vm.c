@@ -495,3 +495,28 @@ void vmprint(pagetable_t pagetable)
     }
   }
 }
+
+pagetable_t ukvminit()
+{
+  pagetable_t k_pagetable = (pagetable_t)kalloc();
+  memset(k_pagetable, 0, PGSIZE);
+  // 将该页表的第1-511项全部用内核页表的PTE填充
+  for (int i = 1; i < 512; i++)
+  {
+    k_pagetable[i] = kernel_pagetable[i];
+  }
+
+  // uart registers
+  kvmmap(UART0, UART0, PGSIZE, PTE_R | PTE_W);
+
+  // virtio mmio disk interface
+  kvmmap(VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
+
+  // CLINT
+  kvmmap(CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+
+  // PLIC
+  kvmmap(PLIC, PLIC, 0x400000, PTE_R | PTE_W);
+
+  return kernel_pagetable;
+}
