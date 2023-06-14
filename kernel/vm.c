@@ -615,8 +615,8 @@ uint64 user_kvmalloc(pagetable_t upagetable, pagetable_t kpagetable, uint64 olds
     }
     *kpte = *upte;
 
-    // 注意：错误写法 *kpte = *kpte & (~(PTE_U & PTE_X));
-    *kpte = *kpte & (~(PTE_U | PTE_X));
+    // 注意：错误写法 *kpte = *kpte & (~(PTE_U & PTE_X & PTE_W));
+    *kpte = *kpte & (~(PTE_U | PTE_X | PTE_W));
   }
 
   for (a = newsz; a < oldsz; a += PGSIZE)
