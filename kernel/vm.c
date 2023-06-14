@@ -385,6 +385,8 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 // Return 0 on success, -1 on error.
 int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
+  return copyin_new(pagetable, dst, srcva, len);
+  /*
   uint64 n, va0, pa0;
 
   while (len > 0)
@@ -403,6 +405,7 @@ int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
     srcva = va0 + PGSIZE;
   }
   return 0;
+  */
 }
 
 // Copy a null-terminated string from user to kernel.
@@ -411,6 +414,8 @@ int copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 // Return 0 on success, -1 on error.
 int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
+  return copyinstr_new(pagetable, dst, srcva, max);
+  /*
   uint64 n, va0, pa0;
   int got_null = 0;
 
@@ -453,6 +458,7 @@ int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   {
     return -1;
   }
+  */
 }
 
 /**
@@ -579,4 +585,48 @@ void user_kvmfree(pagetable_t pagetable)
   }
   kfree(level1_pagetable);
   kfree(pagetable);
+}
+
+// Allocate PTEs and physical memory to grow process from oldsz to
+// newsz, which need not be page aligned.  Returns new size or 0 on error.
+uint64 user_kvmalloc(pagetable_t upagetable, pagetable_t kpagetable, uint64 oldsz, uint64 newsz)
+{
+  // 注意：防止用户进程增长到超过PLIC的地址
+  if (newsz >= PLIC)
+  {
+    return 0;
+  }
+
+  uint64 a;
+  if (newsz < oldsz)
+    return oldsz;
+  oldsz = PGROUNDUP(oldsz);
+  pte_t *upte, *kpte;
+
+  for (a = oldsz; a < newsz; a += PGSIZE)
+  {
+    if ((upte = walk(upagetable, a, 0)) == 0)
+    {
+      panic("u2kvmcopy: src pte does not exist");
+    }
+    if ((kpte = walk(kpagetable, a, 1)) == 0)
+    {
+      panic("u2kvmcopy: pte walk failed");
+    }
+    *kpte = *upte;
+
+    // 注意：错误写法 *kpte = *kpte & (~(PTE_U & PTE_X));
+    *kpte = *kpte & (~(PTE_U | PTE_X));
+  }
+
+  for (a = newsz; a < oldsz; a += PGSIZE)
+  {
+    if ((kpte = walk(kpagetable, a, 1)) == 0)
+    {
+      panic("u2kvmcopy: pte walk failed");
+    }
+    *kpte &= ~PTE_U;
+  }
+
+  return newsz;
 }

@@ -234,6 +234,7 @@ void userinit(void)
   // and data into it.
   uvminit(p->pagetable, initcode, sizeof(initcode));
   p->sz = PGSIZE;
+  user_kvmalloc(p->pagetable, p->k_pagetable, 0, PGSIZE);
 
   // prepare for the very first "return" from kernel to user.
   p->trapframe->epc = 0;     // user program counter
@@ -265,6 +266,11 @@ int growproc(int n)
   else if (n < 0)
   {
     sz = uvmdealloc(p->pagetable, sz, sz + n);
+  }
+  // 注意：此处的旧sz是sz-n，即扩展前的size，不能直接将旧sz认为是sz，新sz认为是sz+n
+  if (user_kvmalloc(p->pagetable, p->k_pagetable, p->sz, sz) == 0)
+  {
+    return -1;
   }
   p->sz = sz;
   return 0;
@@ -312,6 +318,10 @@ int fork(void)
   pid = np->pid;
 
   np->state = RUNNABLE;
+  if (user_kvmalloc(np->pagetable, np->k_pagetable, 0, np->sz) == 0)
+  {
+    return -1;
+  }
 
   release(&np->lock);
 

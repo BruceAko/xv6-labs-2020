@@ -116,6 +116,8 @@ int exec(char *path, char **argv)
   p->sz = sz;
   p->trapframe->epc = elf.entry; // initial program counter = main
   p->trapframe->sp = sp;         // initial stack pointer
+  if (user_kvmalloc(p->pagetable, p->k_pagetable, 0, p->sz) == 0)
+    goto bad;
   proc_freepagetable(oldpagetable, oldsz);
 
   if (p->pid == 1)
