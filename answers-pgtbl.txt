@@ -2,3 +2,7 @@ Q:根据文本中的图3-4解释vmprint的输出。page 0包含什么？page 2�
 
 A:根据参考书的图3-4还有打印出来的地址值（可以在分配页面时打印出text stack trampoline的地址）显然可以得出page0是程序的text和data段，page2是程序的stack段，page1是guard段。在exec中查代码发现其连续分配两个page，高地址page用作stack，低地址page用作guard，并且对guard进行clear，也就是其PTE的U为0，所以不能进行读写。剩下的都是高地址段：依次是自己定义的usyscall，trapframe，trampoline。
 参考：https://zhuanlan.zhihu.com/p/452807553
+
+Q:解释为什么在copyin_new()中需要第三个测试srcva + len < srcva：给出srcva和len值的例子，这样的值将使前两个测试为假（即它们不会导致返回-1），但是第三个测试为真 （导致返回-1）。
+
+A:三个return -1的条件分别为srcva >= p->sz,srcva + len >= p->sz和srcva + len < srcva。很显然,此处第三个条件主要是进行溢出检测,防止无符号整数上溢。由于srcva和len均为uint64类型的变量,当srcva小于p->sz但是len为一个极大的数时,如0xffff...ffff(即对应-1),由于无符号整数溢出便可以满足srcva + len  < p->sz这一条件,但实际上复制了大量内存。但通过srcva + len < srcva这一判断条件能够检测出溢出。
