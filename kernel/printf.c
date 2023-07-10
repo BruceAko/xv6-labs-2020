@@ -137,4 +137,14 @@ void printfinit(void)
 
 void backtrace(void)
 {
+  printf("backtrace:\n");
+  uint64 fp = r_fp();
+
+  // 注意：根据当前的fp是否被分配了一个页面，来判断是否终止循环
+  while (PGROUNDUP(fp) - PGROUNDDOWN(fp) == PGSIZE)
+  {
+    uint64 ret_addr = *(uint64 *)(fp - 8);
+    printf("%p\n", ret_addr);
+    fp = *(uint64 *)(fp - 16);
+  }
 }
