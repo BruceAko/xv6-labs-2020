@@ -522,6 +522,16 @@ sys_pipe(void)
 uint64
 sys_sigalarm(void)
 {
+  struct proc *p = myproc();
+  int tick;
+  uint64 uargv;
+
+  if (argint(0, &tick) < 0 || argaddr(1, &uargv) < 0)
+  {
+    return -1;
+  }
+  p->alarm_tick = tick;
+  p->alarm_handler = (void (*)())uargv;
   return 0;
 }
 
