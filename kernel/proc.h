@@ -118,4 +118,6 @@ struct proc
   int alarm_tick;
   void (*alarm_handler)();
   int tick_passed;
+  struct trapframe *alarm_trapframe;
+  int is_alarming;
 };

@@ -79,11 +79,15 @@ void usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if (which_dev == 2)
+  // 如果计时器中断到达，且该进程现在正处于sigalarm的处理函数中，则忽略该此tick
+  if (which_dev == 2 && p->is_alarming == 0)
   {
     p->tick_passed++;
     if (p->tick_passed == p->alarm_tick)
     {
+      p->is_alarming = 1;
+      // 将恢复被中断的代码所需要的寄存器，保存到proc结构体的alarm_trapframe中
+      memmove(p->alarm_trapframe, p->trapframe, sizeof(struct trapframe));
       // 注意：此处不能直接执行函数调用，因为陷阱还没有通过usertrapret()返回到用户空间。
       // 当RISC-V上的陷阱返回到用户空间时，SEPC决定了用户空间代码恢复执行的指令地址。
       // p->alarm_handler();
