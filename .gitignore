@@ -12,6 +12,7 @@ initcode
 initcode.out
 kernelmemfs
 kernel/kernel
+mkfs
 user/usys.S
 .gdbinit
 myapi.key
@@ -21,3 +22,4 @@ xv6.out*
 submissions/
 ph
 barrier
+.vscode
