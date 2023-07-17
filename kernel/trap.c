@@ -70,6 +70,8 @@ void usertrap(void)
     // 处理页面错误
     uint64 fault_va = r_stval(); // 产生页面错误的虚拟地址
     char *pa;                    // 分配的物理地址
+    // 注意：这里要把p->killed = 1放到else分支，不能用连续的if判断，否则不满足if条件时还会执行接下来分支的语句
+    // 注意：p->killed = 1没有return，要放到else分支！
     if (PGROUNDUP(p->trapframe->sp) - 1 < fault_va && fault_va < p->sz &&
         (pa = kalloc()) != 0)
     {
