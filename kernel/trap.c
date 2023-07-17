@@ -64,6 +64,24 @@ void usertrap(void)
 
     syscall();
   }
+  // trap类型为页面错误
+  else if (r_scause() == 13 || r_scause() == 15)
+  {
+    uint64 addr = r_stval();
+    addr = PGROUNDDOWN(addr);
+    pagetable_t pagetable = myproc()->pagetable;
+    char *mem = kalloc();
+    if (mem == 0)
+    {
+      panic("no enough memory");
+    }
+    memset(mem, 0, PGSIZE);
+    if (mappages(pagetable, addr, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U) != 0)
+    {
+      kfree(mem);
+      panic("map failed");
+    }
+  }
   else if ((which_dev = devintr()) != 0)
   {
     // ok
