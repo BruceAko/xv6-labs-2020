@@ -113,7 +113,7 @@ write_head(void)
   {
     hb->block[i] = log.lh.block[i];
   }
-  bwrite(buf);
+  bwrite(buf); // 原子操作，该步是真正的提交日志
   brelse(buf);
 }
 
