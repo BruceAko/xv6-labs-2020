@@ -114,6 +114,7 @@ write_head(void)
     hb->block[i] = log.lh.block[i];
   }
   bwrite(buf); // 原子操作，该步是真正的提交日志
+  // 如果崩溃发生在bwrite()之前，所有的改动将被丢弃；如果崩溃发生在此之后，所有的改动将被重新安装。
   brelse(buf);
 }
 
